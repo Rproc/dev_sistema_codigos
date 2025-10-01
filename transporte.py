@@ -53,4 +53,8 @@ carro1 = Carro('BYD', 'Dolphin Mini', 'Cinza', 2025, 4)
 carro2 = Carro('VW', 'Gol Bolinha', 'Cinza', 1998, 2)
 
 # carro1.detalhes()
-carro1.acelerar()
+# carro1.acelerar()
+
+
+print(carro1)
+print(carro1.getModelo())
