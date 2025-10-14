@@ -41,6 +41,10 @@ def validar_usuario(dados):
         "Campo 'nome' é obrigatorio", None
     # ja que o campo existe, iremos pegar o 
     # valor associado a ele
+    if not isinstance(dados['nome'], str):
+        return False, "O campo 'nome' deve \
+            ser textual", None
+
     nome = dados.get('nome', '').strip()
 
     # tenho o nome, o que eu quero validar?
@@ -58,6 +62,15 @@ def validar_usuario(dados):
     if 'email' not in dados:
         return False, \
     "Campo 'email' é obrigatório", None
+
+    if not isinstance(dados['email'], str):
+        return False, "O campo 'email' deve \
+            ser textual", None
+    
+    if ('@' not in dados['email'] or 
+    '.' not in dados['email']):
+        return False, "O email informado não \
+            é válido", None
 
     email = dados.get('email', '').strip().lower()
 
@@ -131,8 +144,77 @@ def criar_usuario():
     valido, erro, dados_validados = \
     validar_usuario(request.get_json())
 
+    # if valido == False é a mesma coisa que:
+    if not valido:
+        return jsonify({
+            'erro': erro
+        })
 
+    novo_usuario = {
+        'id': proximo_id,
+        'nome': dados_validados['nome'],
+        'email': dados_validados['email'],
+        'senha': dados_validados['senha']
+    }
+    usuarios.append(novo_usuario)
+    # preparar proxima inserção
+    proximo_id += 1
 
+    # já que não vamos mais usar novo_usuario
+    # removeremos a senha dele para apresentar
+    novo_usuario.pop('senha', None)
+
+    return jsonify({
+        'mensagem':'Usuário criado com sucesso',
+        'usuario': novo_usuario
+    }), 201
+
+@app.route('/login', methods=['POST'])
+def login():
+    dados = request.get_json()
+
+    if not dados:
+        return jsonify({
+            'erro':'Corpo da requisição não \
+            pode estar vazio'
+        }), 400
+    
+    email = dados.get('email', '').strip().lower()
+    senha = dados.get('senha', '').strip()
+
+    if not email or not senha:
+        return jsonify({
+            'erro':'Os campos de email e senha \
+                são obrigatórios'
+        }), 400
+
+    usuario = [user for user in usuarios
+               if email == user['email']]
+    
+    user = usuario[0]
+    if len(usuario) < 1:
+        return jsonify({
+            'erro':'Email ou senha inválidos'
+        }), 400
+    
+    if senha != user['senha']:
+        return jsonify({
+            'erro':'Email ou senha inválidos'
+        }), 400
+    
+    user.pop('senha', None)
+    return jsonify({
+        'mensagem':'Login realizado com sucesso',
+        'usuario':'usuario',
+        'token': f"token_user_{user['id']}"
+    }), 200
+
+    # verificar
+    # 1. Se há dados
+    # 2. verificar se há email e senha
+    # 3. Verificar se o usuario 
+    # (email ou nome, vc escolhe) esta cadastrado
+    # 4. verficiar se a senha esta igual
 
 
 # iniciar o servidor -> porta padrão 5000
