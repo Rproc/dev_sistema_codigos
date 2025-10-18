@@ -21,13 +21,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATION'] = False
 # Vamos inicializar a 'caixinha magica' (BD) com o app
 db.init_app(app)
 
-
-
-# pq não estamos usando BD
-# Ideia de autoincrement
-proximo_id = 4
-
-def validar_usuario(dados):
+def validar_usuario(dados, user=None):
+    # user -> chamado só quando atualiza
     # validar dados vindo das requisições
     # 3 retornos: 
     # 1 -> se são validos (True)/False
@@ -37,81 +32,89 @@ def validar_usuario(dados):
     if not dados:
         return False, "Corpo da requisição \
         não pode ser vazio", None
+    
+    dados_validados = {}
 
     # se existe o campo nome no JSON
     if 'nome' not in dados:
-        return False, \
-        "Campo 'nome' é obrigatorio", None
-    # ja que o campo existe, iremos pegar o 
-    # valor associado a ele
-    if not isinstance(dados['nome'], str):
-        return False, "O campo 'nome' deve \
-            ser textual", None
+        # ja que o campo existe, iremos pegar o 
+        # valor associado a ele
+        if not isinstance(dados['nome'], str):
+            return False, "O campo 'nome' deve \
+                ser textual", None
 
-    nome = dados.get('nome', '').strip()
+        nome = dados.get('nome', '').strip()
 
-    # tenho o nome, o que eu quero validar?
-    if not nome:
-        return False, \
-    "Campo 'nome' não pode estar vazio", None
+        # tenho o nome, o que eu quero validar?
+        if not nome:
+            return False, \
+        "Campo 'nome' não pode estar vazio", None
 
-    # tamanho minimo do nome
-    if len(nome) < 3:
-        return False, "Campo 'nome' deve ter \
-            no minimo 3 caracteres", None
+        # tamanho minimo do nome
+        if len(nome) < 3:
+            return False, "Campo 'nome' deve ter \
+                no minimo 3 caracteres", None
 
+        dados_validados['nome'] = nome
+    elif not user:
+        return False, "Campo 'nome' é obrigatório", None
     # ------------------------------------
     # Se existe o campo EMAIL no JSON
     if 'email' not in dados:
-        return False, \
-    "Campo 'email' é obrigatório", None
+        if not isinstance(dados['email'], str):
+            return False, "O campo 'email' deve \
+                ser textual", None
+        
+        if ('@' not in dados['email'] or 
+        '.' not in dados['email']):
+            return False, "O email informado não \
+                é válido", None
 
-    if not isinstance(dados['email'], str):
-        return False, "O campo 'email' deve \
-            ser textual", None
-    
-    if ('@' not in dados['email'] or 
-    '.' not in dados['email']):
-        return False, "O email informado não \
-            é válido", None
+        email = dados.get('email', '').strip().lower()
 
-    email = dados.get('email', '').strip().lower()
-
-    if not email:
-        return False, "Campo 'email' não \
-        pode estar vazio", None
-    
-    # Certeza -> Campo Email existe e o 
-    # email existe
-    email_existente = [user for user in usuarios if email == user['email']]
-
-    # verificar se há algum usuario com esse email
-    if len(email_existente) > 0:
-        return False, "Este email já \
-            está cadastrado", None
-    
+        if not email:
+            return False, "Campo 'email' não \
+            pode estar vazio", None
+        
+        # Certeza -> Campo Email existe e o 
+        # email existe
+        email_existente = \
+            Usuario.query.filter_by(email=email).first()
+        
+        # verificar se há algum usuario com esse email
+        if email_existente:
+            return False, "Este email já \
+                está cadastrado", None
+        
+        dados_validados['email'] = email
+        
+    # Se não for atualização
+    elif not user:
+        return False, "Campo 'email' é obrigatório", None
     #  ------------------------------------
     if 'senha' not in dados:
-        return False, "Campo 'senha'\
-              é Obrigatorio", None
-    
-    # senha ja existe
-    senha = dados.get('senha', '').strip()
+        senha = dados.get('senha', '').strip()
 
-    if not senha:
-        return False, "Campo 'senha' não pode \
-            estar vazio", None
+        if not senha:
+            return False, "Campo 'senha' não pode \
+                estar vazio", None
+        
+        if len(senha) < 8 and len(senha) > 50:
+            return False, "Campo 'senha' com \
+                tamanho inválido", None 
+        
+        # user -> é quando vc quer atualizar o usuario
+        if user and senha == user.senha:
+            return False, "Campo 'senha' não pode ser\
+                igual a anterior", None
+        
+        dados_validados['senha'] = senha
+
+    elif not user:
+        return False, "Campo 'senha' é obrigatório", None
     
-    if len(senha) < 8 and len(senha) > 50:
-        return False, "Campo 'senha' com \
-            tamanho inválido", None 
-    
-    dados_validados = {
-        'nome': nome,
-        'email': email,
-        'senha': senha
-    }
     return True, None, dados_validados
+
 
 # Rota padrão - Index - Landpage
 @app.route('/')
@@ -122,126 +125,139 @@ def home():
 # Rota GET - Listar Usuario
 @app.route('/usuarios', methods=['GET'])
 def listar_usuarios():
-    # recuperar os usuarios (sem senha)
-    usuarios_sem_senha = []
 
-    for usuario in usuarios:
-        user = usuario.copy()
-        user.pop('senha', None)
-        usuarios_sem_senha.append(user)
+    try:
+        # Pegar todos os usuarios
+        usuarios = Usuario.query.all()
+        # apresentar esses usuarios em uma lista
+        user = [usuario.to_dict() for usuario in usuarios]
 
-    return jsonify({
-        'dados': usuarios_sem_senha,
-        'total': len(usuarios)
-    }), 200
+        return jsonify({
+            'dados': user,
+            'total': len(user)
+        }), 200
+    
+    except Exception as e:
+        return jsonify({
+            'erro':f'Erro ao listar usuários: {e}'
+        }), 500
 
 # POST -> Criar Usuarios
 @app.route('/usuarios', methods=['POST'])
 def criar_usuario():
 
-    global proximo_id
+    try:
+        valido, erro, dados_validados = \
+        validar_usuario(request.get_json())
 
-    valido, erro, dados_validados = \
-    validar_usuario(request.get_json())
+        # if valido == False é a mesma coisa que:
+        if not valido:
+            return jsonify({
+                'erro': erro
+            }), 400
 
-    # if valido == False é a mesma coisa que:
-    if not valido:
+        novo_usuario = Usuario(
+            nome = dados_validados['nome'],
+            email = dados_validados['email'],
+            senha = dados_validados['senha']
+        )
+
+        # Preparar inserção no Banco
+        db.session.add(novo_usuario)
+        # Adiciono (aqui é quando o ID é adicionado)
+        db.session.commit()
+
         return jsonify({
-            'erro': erro
-        })
+            'mensagem':'Usuário criado com sucesso',
+            'usuario': novo_usuario.to_dict()
+        }), 201
+    
+    except Exception as e:
+        return jsonify({
+            'erro':f'Erro ao criar usuario: {e}'
+        }), 500
 
-    novo_usuario = {
-        'id': proximo_id,
-        'nome': dados_validados['nome'],
-        'email': dados_validados['email'],
-        'senha': dados_validados['senha']
-    }
-    usuarios.append(novo_usuario)
-    # preparar proxima inserção
-    proximo_id += 1
-
-    # já que não vamos mais usar novo_usuario
-    # removeremos a senha dele para apresentar
-    novo_usuario.pop('senha', None)
-
-    return jsonify({
-        'mensagem':'Usuário criado com sucesso',
-        'usuario': novo_usuario
-    }), 201
 
 # LOGIN
 @app.route('/login', methods=['POST'])
 def login():
-    dados = request.get_json()
 
-    if not dados:
-        return jsonify({
-            'erro':'Corpo da requisição não \
-            pode estar vazio'
-        }), 400
+    try:
+        dados = request.get_json()
+
+        if not dados:
+            return jsonify({
+                'erro':'Corpo da requisição não \
+                pode estar vazio'
+            }), 400
     
-    email = dados.get('email', '').strip().lower()
-    senha = dados.get('senha', '').strip()
+        email = dados.get('email', '').strip().lower()
+        senha = dados.get('senha', '').strip()
 
-    if not email or not senha:
-        return jsonify({
-            'erro':'Os campos de email e senha \
-                são obrigatórios'
-        }), 400
+        if not email or not senha:
+            return jsonify({
+                'erro':'Os campos de email e senha \
+                    são obrigatórios'
+            }), 400
+        
+        # filter_by(#1 = #2)
+        # #1 = Nome da Coluna da Classe/Banco
+        # #2 = Nome da variavel que vc quer achar
+        # first() -> retorna o primeiro resultado apenas ou None
+        usuario = Usuario.query.filter_by(email=email).first()
 
-    usuario = [user for user in usuarios
-               if email == user['email']]
+        # errou email
+        if not usuario:
+            return jsonify({
+                'erro':'Email ou senha inválidos'
+            }), 401
+        
+        # acertou email, errou a senha
+        if usuario.senha != senha:
+            return jsonify({
+                'erro':'Email ou senha inválidos'
+            }), 401
     
-    if len(usuario) < 1:
         return jsonify({
-            'erro':'Email ou senha inválidos'
-        }), 400
-    usuario = usuario[0]
+            'mensagem':'Login realizado com sucesso',
+            'usuario':usuario.to_dict(),
+            'token': f"token_user_{usuario.id}"
+        }), 200
 
-    if senha != usuario['senha']:
+    except Exception as e:
         return jsonify({
-            'erro':'Email ou senha inválidos'
-        }), 400
-    
-    usuario.pop('senha', None)
-    return jsonify({
-        'mensagem':'Login realizado com sucesso',
-        'usuario':usuario,
-        'token': f"token_user_{usuario['id']}"
-    }), 200
+            'erro':f'Erro ao efetuar o login: {e}'
+        }), 500
 
-    # verificar
-    # 1. Se há dados
-    # 2. verificar se há email e senha
-    # 3. Verificar se o usuario 
-    # (email ou nome, vc escolhe) esta cadastrado
-    # 4. verficiar se a senha esta igual
 
 @app.route('/usuarios/<int:id_usuario>', methods=['DELETE'])
 def deletar_usuario(id_usuario):
 
-    global usuarios
+    try:
+        usuario = Usuario.query.get(id_usuario)
 
-    # forma 1 -> caçar o usuario e remover
-    # forma 2 -> repetir a lista, exceto o usuario a ser
-    # removido
+        if not usuario:
+            return jsonify({
+                'erro':'Usuário informado não foi encontrado'
+            }), 404
+        
+        # Preparando o BD para excluir o usuario
+        db.session.delete(usuario)
 
-    # forma 2
-    # Isso é para saber se eu achei ou não o usuario
-    qtd_usuario = len(usuarios)
-
-    usuarios = [user for user in usuarios
-                if user['id'] != id_usuario]
+        # Para confirmar a exclusão
+        db.session.commit()
     
-    if len(usuarios) == qtd_usuario:
         return jsonify({
-            'erro':'Usuário informado não foi encontrado'
-        }), 400
+            'mensagem': 'Usuário deletado com sucesso',
+            'id_deletado': id_usuario
+        }), 200
     
-    return jsonify({
-        'mensagem': 'Usuário deletado com sucesso',
-        'id_deletado': id_usuario
-    }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'erro':f'Erro ao deletar usuário:{e}'
+        }), 500
+
 
 # ------------------------------------------------
 # Atualizar -> 2 Metodos
@@ -253,65 +269,49 @@ def deletar_usuario(id_usuario):
 
 @app.route('/usuarios/<int:id_usuario>', methods=['PATCH'])
 def atualizar_usuario(id_usuario):
-    usuario = next((user for user in usuarios
-                    if user['id']==id_usuario), None)
+    try:
+        usuario = Usuario.query.get(id_usuario)
     
-    if not usuario:
-        return jsonify({
-            'erro':'Usuário não encontrado'
-        }), 404
+        if not usuario:
+            return jsonify({
+                'erro':'Usuário não encontrado'
+            }), 404
     
-    dados = request.get_json()
+        dados = request.get_json()
 
-    if not dados:
-        return jsonify({
-            'erro':'Corpo da requisição não pode estar vazio'
-        }), 400
-    
-    if 'nome' in dados:
-        nome = dados['nome'].strip()
-        if len(nome) < 3:
+        if not dados:
             return jsonify({
-                'erro':'Nome deve ter mais que 3 caracteres'
+                'erro':'Corpo da requisição não pode estar vazio'
             }), 400
-        usuario['nome'] = nome
 
-    if 'email' in dados:
-        email = dados['email'].strip().lower()
-        if ('@' not in email or '.' not in email):
-            return jsonify({
-                'erro': 'O email informado não é válido'
-            }), 400
-        email_existente = next((user for user in usuarios
-                            if email == user['email']), None)
-        if email_existente:
-            return jsonify({
-                'erro': 'Email já está cadastrado'
-            }), 400
-        usuario['email'] = email
-
-    if 'senha' in dados:
-        senha = dados['senha'].strip()
-        if len(senha) < 8 or len(senha) > 50:
-            return jsonify({
-                'erro':'A senha deve ter no minimo 8 \
-                    caracteres e no máximo 50'
-            }), 400
-        if senha == usuario['senha']:
-            return jsonify({
-                'erro': 'A senha não pode ser igual \
-                    a anterior'
-            }), 400
+        valido, erro, dados_validados = \
+            validar_usuario(dados, usuario)
         
-        usuario['senha'] = senha
+        if not valido:
+            return jsonify({
+                'erro': erro
+            }), 400
+        # dados_validados -> Todos os dados informados
+        # No criar_usuario() -> nome, email, senha
+        # No atualizar_usuario() -> ???
 
-    user = usuario.copy()
-    user.pop('senha', None)
+        for chave, valor in dados_validados.items():
+            # Aqui usaremos uma função para passar 
+            # o conteudo do dicionario para o objeto (usuario)
+            setattr(usuario, chave, valor)
+        
+        # atualizar o banco (pelo ORM)
+        db.session.commit()
 
-    return jsonify({
-        'mensagem': 'Usuário atualizado com sucesso',
-        'usuario': user
-    }), 200
+        return jsonify({
+            'mensagem': 'Usuário atualizado com sucesso',
+            'usuario': usuario.to_dict()
+        }), 200
+    
+    except Exception as e:
+        return jsonify({
+            'erro':f'Erro ao atualizar o usuário: {e}'
+        }), 500
 
 # comando CLI (linha de comando) para popular o banco
 @app.cli.command()
