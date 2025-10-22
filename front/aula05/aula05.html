@@ -1,0 +1,30 @@
+<h2>Lista de Usuários</h2>
+<table id="tabelaUsuarios" border="1">
+	<thead>
+		<tr>
+			<th>ID</th>
+			<th>Nome</th>
+			<th>Email</th>
+		</tr>
+	</thead>
+	<tbody></tbody>
+</table>
+
+<script>
+	const usuarios = [
+		{ id: 1, nome: "Maria", email: "maria@exemplo.com" },
+		{ id: 2, nome: "João", email: "joao@exemplo.com" },
+	];
+
+	function listarUsuarios() {
+		const tbody = document.querySelector("#tabelaUsuarios tbody");
+		tbody.innerHTML = "";
+		usuarios.forEach((u) => {
+			const tr = document.createElement("tr");
+			tr.innerHTML = `<td>${u.id}</td><td>${u.nome}</td><td>${u.email}</td>`;
+			tbody.appendChild(tr);
+		});
+	}
+
+	listarUsuarios();
+</script>

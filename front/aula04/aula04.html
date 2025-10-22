@@ -1,0 +1,18 @@
+<form id="formCadastro">
+	<label>Nome:</label>
+	<input id="nome" />
+	<button type="submit">Enviar</button>
+</form>
+
+<script>
+	document
+		.getElementById("formCadastro")
+		// addEventListener liga um evento a uma ação.
+
+		.addEventListener("submit", function (e) {
+			// preventDefault() impede o comportamento padrão (recarregar a página).
+			e.preventDefault();
+			const nome = document.getElementById("nome").value;
+			alert("Bem-vindo, " + nome + "!");
+		});
+</script>

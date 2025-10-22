@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Geovanni's Pizza - Cadastro de Usuário</title>
+</head>
+
+<body>
+	<h1>Cadastro de Usuário</h1>
+	<p>Preencha os campos abaixo para se cadastrar no sistema.</p>
+
+	<form id="formCadastro">
+		<label for="nome">Nome:</label><br>
+		<input type="text" id="nome" placeholder="Digite seu nome completo" required><br><br>
+
+		<label for="email">Email:</label><br>
+		<input type="email" id="email" placeholder="Digite seu email" required><br><br>
+
+		<label for="senha">Senha:</label><br>
+		<input type="password" id="senha" placeholder="Crie uma senha" required><br><br>
+
+		<button type="submit">Cadastrar</button>
+	</form>
+
+	<hr>
+
+	<p><strong>Observação:</strong> Por enquanto, o formulário apenas exibe os dados no console do navegador.
+		Nas próximas aulas, aprenderemos a enviar essas informações para o backend com JavaScript.</p>
+
+	<script>
+		// Captura o evento de envio do formulário
+		document.getElementById("formCadastro").addEventListener("submit", function (e) {
+			e.preventDefault(); // Evita recarregar a página
+
+			// Captura os valores dos campos
+			const nome = document.getElementById("nome").value;
+			const email = document.getElementById("email").value;
+			const senha = document.getElementById("senha").value;
+
+			// Exibe no console (simulando envio)
+			console.log("Dados do usuário:");
+			console.log("Nome:", nome);
+			console.log("Email:", email);
+			console.log("Senha:", senha);
+
+			alert("Formulário enviado! Confira os dados no console (F12).");
+		});
+	</script>
+</body>
+
+</html>
