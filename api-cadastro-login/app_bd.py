@@ -36,7 +36,7 @@ def validar_usuario(dados, user=None):
     dados_validados = {}
 
     # se existe o campo nome no JSON
-    if 'nome' not in dados:
+    if 'nome' in dados:
         # ja que o campo existe, iremos pegar o 
         # valor associado a ele
         if not isinstance(dados['nome'], str):
@@ -60,7 +60,7 @@ def validar_usuario(dados, user=None):
         return False, "Campo 'nome' é obrigatório", None
     # ------------------------------------
     # Se existe o campo EMAIL no JSON
-    if 'email' not in dados:
+    if 'email' in dados:
         if not isinstance(dados['email'], str):
             return False, "O campo 'email' deve \
                 ser textual", None
@@ -92,7 +92,7 @@ def validar_usuario(dados, user=None):
     elif not user:
         return False, "Campo 'email' é obrigatório", None
     #  ------------------------------------
-    if 'senha' not in dados:
+    if 'senha' in dados:
         senha = dados.get('senha', '').strip()
 
         if not senha:
