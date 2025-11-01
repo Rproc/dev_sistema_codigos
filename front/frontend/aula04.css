@@ -1,0 +1,51 @@
+body {
+	font-family: Arial, sans-serif;
+	background-color: #f8f8f8;
+	margin: 40px;
+}
+
+h1 {
+	color: #b22222;
+}
+
+form {
+	background: white;
+	padding: 20px;
+	width: 300px;
+	border-radius: 8px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+	margin-bottom: 20px;
+}
+
+input {
+	width: 94%;
+	padding: 8px;
+	margin-top: 5px;
+}
+
+button {
+	margin-top: 10px;
+	background: #b22222;
+	color: white;
+	border: none;
+	padding: 10px;
+	cursor: pointer;
+	width: 100%;
+}
+
+button:hover {
+	background: #8b1a1a;
+}
+
+ul {
+	list-style-type: none;
+	padding: 0;
+}
+
+li {
+	background: white;
+	padding: 10px;
+	border-radius: 5px;
+	margin-bottom: 8px;
+	box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}

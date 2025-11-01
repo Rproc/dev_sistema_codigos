@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="style.css" />
+		<title>Formulário do Geovanni</title>
+	</head>
+	<body>
+		<h1>Cadastro de Usuário</h1>
+		<p>Preencha os campos abaixo</p>
+		<form id="formCadastro">
+			<label for="nome">Nome:</label>
+			<input
+				type="text"
+				id="nome"
+				name="nome"
+				placeholder="Digite seu nome"
+				required
+			/>
+
+			<label for="email">Email:</label>
+			<input
+				type="email"
+				id="email"
+				name="email"
+				placeholder="Digite seu email"
+				required
+			/>
+
+			<label for="senha">Senha:</label>
+			<input
+				type="password"
+				name="senha"
+				id="senha"
+				required
+				placeholder="Digite sua senha"
+			/>
+
+			<label for="senha2">Redigite sua Senha:</label>
+			<input
+				type="password"
+				name="senha2"
+				id="senha2"
+				required
+				placeholder="Confirme sua senha"
+			/>
+			<button id="submit" type="submit">Enviar</button>
+			<button id="reset" type="reset">Resetar</button>
+		</form>
+
+		<script>
+			// Pegar os dados do formulario
+			document
+				.getElementById("formCadastro")
+				.addEventListener("submit", function (e) {
+					// Evitar de recarregar a pagina
+					e.preventDefault();
+
+					// Capturar/Salvar os dados
+					const nome = document.getElementById("nome").value;
+					const email = document.getElementById("email").value;
+					const senha = document.getElementById("senha").value;
+					const senha2 = document.getElementById("senha2").value;
+
+					if (senha !== senha2) {
+						alert("Senhas não coincidem");
+					} else {
+						console.log("O Usuário foi criado");
+						console.log("Nome: " + nome);
+						alert(
+							"O Usuário foi criado\n \
+                    com o nome " + nome
+						);
+					}
+				});
+		</script>
+	</body>
+</html>

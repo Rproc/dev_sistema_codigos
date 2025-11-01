@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geovanni's Pizza - Sistema de Usuário</title>
+</head>
+<body>
+    <h1>
+        Geovanni's Pizza 
+    </h1>
+    <h2>
+        Cadastro de Usuário
+    </h2>
+    <p>
+        Se cadastre-se aí <br>
+        Me fala nome, email e senha 
+        (mas não reuse sua senha, 
+        não gastamos em segurança)
+    </p>
+
+    <hr>
+
+    <h2>
+        Listagem de Usuários
+    </h2>
+    <p>
+        Olha quem perdeu tempo se cadastrando
+        nisso.
+    </p>
+
+    <h3>
+        O que essa seção vai mostrar?
+    </h3>
+    
+    <ul>
+        <li>Nome do Ser Humano</li>
+        <li>Email do Ser Humano</li>
+        <li>Data de "nascimento" do Ser Humano</li>
+        <li>Botão de Atualizar o Ser Humano e 
+            o Botão de Deletar o Ser Humano</li>
+    </ul>
+    
+    <hr>
+
+    <h2>
+        Login
+    </h2>
+    <p>
+        Entra aí, Covarde. <br>
+        Peço encarecidamente que vossa 
+        excelência nos informe seu 
+        endereço eletrônico e sua chave secreta,
+        mas não demore muito, tmj!
+    </p>
+
+    <ul>
+        <li>Endereço eletrônico</li>
+        <li>Senha/Chave Secreta</li>
+    </ul>
+    <button>Entrar</button>
+    <hr>
+
+    <script>
+        // JS -> 3 tipos de variaveis
+        // const -> Constante (valor não muda)
+        // let -> mais nova, e indicada
+        // let -> escopo local
+        // var -> padrão, e não indicada
+        // var -> escopo global
+
+        let nome = prompt('Informe seu nome')
+        let email = prompt('Informe seu email')
+        let senha = prompt('Informe sua senha')
+
+        document.write('<h2>Você foi \
+            cadastrado com sucesso</h2>')
+        
+        document.write('<p>Seja bem vindo ' 
+            + nome +' tmj irmão!! </p>')
+        
+        
+        
+    </script>
+
+</body>
+</html>

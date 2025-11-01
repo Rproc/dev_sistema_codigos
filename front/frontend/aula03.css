@@ -1,0 +1,231 @@
+/* =========================================================
+   ARQUIVO: style_comentado.css
+   OBJETIVO: Explicar linha por linha do CSS da aula,
+             incluindo alternativas e observações pedagógicas.
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   BODY - Define o estilo geral da página
+   --------------------------------------------------------- */
+body {
+  /* Define a fonte padrão de todo o site */
+  font-family: Arial, sans-serif;
+  /* Alternativas:
+     font-family: Verdana, sans-serif;   → mais espaçada, legível
+     font-family: "Times New Roman", serif; → estilo tradicional com serifa
+     font-family: 'Roboto', sans-serif;  → fonte moderna do Google Fonts
+  */
+
+  /* Cor de fundo do site (cinza muito claro) */
+  background-color: #fafafa;
+  /* Alternativas:
+     background-color: #ffffff;   → branco puro
+     background-color: #f0f0f0;   → cinza mais escuro
+     background-image: url('fundo.jpg'); → usar imagem como fundo
+     background: linear-gradient(white, #f0f0f0); → degradê leve
+  */
+
+  /* Margem externa: afasta todo o conteúdo das bordas da tela */
+  margin: 40px;
+  /* Alternativas:
+     margin: 0 auto;         → centraliza o conteúdo se houver largura fixa
+     margin: 20px 50px;      → 20px em cima/baixo, 50px nas laterais
+     padding: 40px;          → usa espaçamento interno em vez de externo
+  */
+}
+
+
+/* ---------------------------------------------------------
+   H1 - Estilo do título principal
+   --------------------------------------------------------- */
+h1 {
+  /* Cor do texto do título */
+  color: #b22222;
+  /* #b22222 é um tom de vermelho escuro ("firebrick").
+     Alternativas:
+     color: red;        → vermelho puro
+     color: darkred;    → vermelho mais escuro
+     color: #8b0000;    → tom ainda mais forte
+     color: rgb(178,34,34); → mesma cor em formato RGB
+  */
+}
+
+
+/* ---------------------------------------------------------
+   FORM - Define a aparência da caixa de formulário
+   --------------------------------------------------------- */
+form {
+  /* Cor de fundo da caixa do formulário */
+  background: white;
+  /* Alternativas:
+     background-color: #fff;     → mesma coisa, forma mais explícita
+     background: linear-gradient(white, #f7f7f7); → fundo levemente degradê
+  */
+
+  /* Espaçamento interno (padding) — distância entre conteúdo e borda */
+  padding: 20px;
+  /* Padding é o “respiro” dentro da caixa.
+     Alternativas:
+     padding: 10px 30px;   → 10px em cima/baixo e 30px nas laterais
+     padding-top: 20px;    → define apenas a parte de cima
+  */
+
+  /* Largura fixa da caixa */
+  width: 300px;
+  /* Alternativas:
+     width: 100%;       → ocupa toda a largura disponível
+     max-width: 400px;  → ajusta-se até esse limite
+     width: fit-content; → ajusta ao tamanho do conteúdo
+  */
+
+  /* Bordas levemente arredondadas */
+  border-radius: 8px;
+  /* Alternativas:
+     border-radius: 0;    → cantos retos
+     border-radius: 20px; → mais arredondado
+     border-radius: 50%;  → círculo perfeito (se altura = largura)
+  */
+
+  /* Sombra sutil ao redor do formulário */
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  /* Explicação:
+     1º valor: deslocamento horizontal (0)
+     2º valor: deslocamento vertical (0)
+     3º valor: desfoque (10px)
+     4º valor: cor (preto com 10% de transparência)
+     Alternativas:
+     box-shadow: 2px 2px 5px rgba(0,0,0,0.3); → sombra mais forte
+     inset 0 0 10px rgba(0,0,0,0.1); → sombra interna
+     none; → sem sombra
+  */
+}
+
+
+/* ---------------------------------------------------------
+   LABEL - Rótulos dos campos do formulário
+   --------------------------------------------------------- */
+label {
+  /* Faz cada label ocupar uma linha inteira */
+  display: block;
+  /* Alternativas:
+     display: inline;        → mantém o label na mesma linha do input
+     display: inline-block;  → pode alinhar horizontalmente com controle de largura
+  */
+
+  /* Espaçamento acima do label (distância entre campos) */
+  margin-top: 10px;
+  /* Alternativas:
+     margin-bottom: 10px; → espaço abaixo
+     margin: 10px 0;      → aplica em cima e embaixo
+     (ou usar gap em contêineres flex/grid)
+  */
+}
+
+
+/* ---------------------------------------------------------
+   INPUT - Campos de texto, email, senha etc.
+   --------------------------------------------------------- */
+input {
+  /* Ocupa toda a largura disponível do formulário */
+  width: 100%;
+  /* Alternativas:
+     width: auto;        → tamanho padrão do navegador
+     width: 80%;         → deixa margens laterais
+     max-width: 400px;   → limita largura máxima
+  */
+
+  /* Espaçamento interno (respiro entre texto e borda do campo) */
+  padding: 8px;
+  /* Alternativas:
+     padding: 5px;          → campo mais compacto
+     padding: 12px 8px;     → altura maior, largura igual
+  */
+
+  /* Espaço entre o label e o campo */
+  margin-top: 5px;
+  /* Alternativas:
+     margin-bottom: 5px; → espaço abaixo
+     margin: 5px 0;      → em cima e embaixo
+  */
+}
+
+
+/* ---------------------------------------------------------
+   BUTTON - Botão de envio
+   --------------------------------------------------------- */
+button {
+  /* Espaço entre o botão e o campo acima */
+  margin-top: 15px;
+  /* Alternativas:
+     margin: 10px 0; → adiciona espaço em cima e embaixo
+  */
+
+  /* Cor de fundo do botão */
+  background: #b22222;
+  /* Alternativas:
+     background: darkred; → vermelho escuro nomeado
+     background: linear-gradient(#b22222, #8b1a1a); → degradê elegante
+     background-image: url('botao.png'); → imagem de fundo
+  */
+
+  /* Cor do texto dentro do botão */
+  color: white;
+  /* Alternativas:
+     color: black; → texto preto
+     color: #ffcc00; → amarelo de destaque
+     inherit; → herda cor do elemento pai
+  */
+
+  /* Remove a borda padrão do botão */
+  border: none;
+  /* Alternativas:
+     border: 1px solid #333; → borda sutil
+     border-radius: 5px;     → bordas arredondadas
+     outline: none;          → remove o contorno ao clicar
+  */
+
+  /* Espaçamento interno (aumenta área clicável) */
+  padding: 10px;
+  /* Alternativas:
+     padding: 8px 16px; → largura maior, altura menor
+     padding: 12px;     → mais destaque visual
+  */
+
+  /* Cursor muda para “mãozinha” ao passar o mouse */
+  cursor: pointer;
+  /* Alternativas:
+     cursor: default;     → cursor normal
+     cursor: not-allowed; → mostra que o botão está desativado
+     cursor: help;        → cursor de interrogação
+  */
+}
+
+
+/* ---------------------------------------------------------
+   BUTTON:HOVER - Efeito ao passar o mouse
+   --------------------------------------------------------- */
+button:hover {
+  /* Muda a cor de fundo quando o mouse passa por cima */
+  background: #8b1a1a;
+  /* Alternativas:
+     background: darkred;       → cor nomeada
+     opacity: 0.8;              → deixa o botão ligeiramente transparente
+     transform: scale(1.05);    → aumenta levemente o tamanho
+  */
+}
+
+/* ---------------------------------------------------------
+   CONCEITO IMPORTANTE:
+   Diferença entre PADDING e MARGIN
+   ---------------------------------------------------------
+   PADDING = Espaço DENTRO da borda (entre conteúdo e borda).
+   MARGIN  = Espaço FORA da borda (entre o elemento e os outros).
+
+   Exemplo visual:
+   [MARGEM][BORDA][PADDING][CONTEÚDO]
+
+   - Padding aumenta o “tamanho interno” da caixa.
+   - Margin apenas empurra o elemento em relação aos vizinhos.
+   - Padding é colorido pelo background do elemento; margin é sempre transparente.
+   --------------------------------------------------------- */

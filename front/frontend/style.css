@@ -1,0 +1,106 @@
+body{
+	font-family: Arial, sans-serif;
+	/* Outras fontes: Courier, "Times New Roman"
+	Verdana (ela é mais espaçada), serif
+	Roboto (fonte do Google)
+	*/
+	font-size: 12px;
+	/* Tamanho da Fonte */
+
+	margin: 10px;
+	/* Margin sempre é externa
+	Cria espaço entre os "cantos" da tela 
+	e o conteudo */
+
+	background-color: #f1efef;
+	/* se por acaso queira carregar uma imagem */
+	/* background-image: url("o caminho") */
+
+}
+
+/* Estilo do titulo */
+h1{
+	font-size: 30px;
+	color: #060a7f;
+	text-align: center;
+}
+
+p{
+	font-size: 16px;
+	color: #2f34cc;
+}
+
+form{
+	background-color: #cbc8c8;
+	padding: 10px;
+	width: 350px;
+	/* width: 100% -> ocupa toda a area disponivel 
+	max-width: valor -> vai até esse tamanho
+	width: fit-content -> ajusta ao tamanho
+	do conteudo*/
+
+	/* bordas */
+	border: 2px solid black;
+	border-radius: 15px;
+	/* Isso faz a suavização das bordas */
+
+	box-shadow: 0px 0px 10px rgb(65, 65, 65);
+	/* 1º valor -> deslocamento horizontal
+	2º valor -> deslocamento vertical
+	3º valor -> desfoque
+	4º valor -> cor  */
+}
+
+label{
+	font-size: 15px;
+	font-weight: bold;
+	/* como vai ser mostrado (o label) */
+	display: block;
+	margin-top: 10px;
+}
+
+input{
+	width: 80%;
+	/* margem "interna" entre o
+	elemento e o texto */
+	padding: 3px;
+}
+
+input:focus{
+	background-color: #e59e9e;
+}
+
+button{
+	margin-top: 15px;
+	border-radius: 5px;
+	width: 80px;
+	height: 25px;
+	cursor: pointer;
+	transform: scale(1);
+	transition: transform 0.5s ease;
+	/* mudar o icone do cursor do mouse */
+}
+
+button:hover{
+	/* ao passar o mouse em cima do botão */
+	opacity: 0.8;
+	border-radius: 50%;
+	transform: scale(1.2);
+}
+
+#reset{
+	background: darkred;
+	color: white;
+}
+
+#submit{
+	background: lightgreen;
+	color:black
+}
+
+
+@media(max-width:400px){
+	form{
+		width: 100%;
+	}
+}

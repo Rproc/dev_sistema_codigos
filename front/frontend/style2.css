@@ -1,0 +1,33 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #fafafa;
+  margin: 40px;
+}
+
+h1 {
+  color: #b22222;
+}
+
+p {
+  font-size: 16px;
+}
+
+.btn {
+  background: #b22222;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: #8b1a1a;
+}
+
+.destaqueAtivo {
+  color: white;
+  background-color: #228b22;
+  padding: 10px;
+  border-radius: 6px;
+}
