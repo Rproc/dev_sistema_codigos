@@ -25,6 +25,15 @@ form.addEventListener("submit", (e) => {
         <h2>${dados.name} (#${dados.id})</h2>
         <img src="${dados.sprites.front_default}" alt="${dados.name}">
         <p>Tipo: ${dados.types.map((t) => t.type.name).join(", ")}</p>
+        <!--
+           O método map() percorre cada elemento do array types e transforma cada item. 
+		   Para cada elemento (representado pela variável t), 
+		   ele acessa a propriedade t.type.name, 
+		   criando um novo array apenas com os nomes dos tipos.
+		   .join(", "): Pega o array resultante do map() e 
+		    junta todos os elementos em uma única string, separando-os por vírgula e espaço ", ".
+        -->
+
       `;
 			inputNome.value = ""; // limpa o campo após a busca
 		})
