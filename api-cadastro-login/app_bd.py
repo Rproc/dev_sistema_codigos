@@ -1,9 +1,16 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 # import do banco e do modelo (classe) do outro arquivo
 from models import db, Usuario
 
 # cria um objeto flask, que vai ser o app
 app = Flask(__name__)
+
+# HABILITA CORS - Permite requisições do frontend
+# Isso é necessário porque o frontend (HTML) e backend (Flask)
+# rodam em portas diferentes (5500 e 5000, por exemplo)
+CORS(app)
+
 
 # JSON aceitar caracteres especiais
 app.config['JSON_AS_ASCII'] = False
