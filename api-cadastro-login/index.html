@@ -40,28 +40,38 @@
 				required
 				minlength="8"
 			/>
-
-			<button type="submit">Cadastrar</button>
-			<button type="reset">Limpar</button>
+			<div>
+				<button type="submit">Cadastrar</button>
+				<button type="reset">Limpar</button>
+			</div>
 		</form>
 
 		<h1>Usuários Cadastrados</h1>
 
-		<button onclick="listarUsuarios()">🔄 Atualizar Lista</button>
+		<button onclick="listarUsuarios()">Atualizar Lista</button>
+		<div id="loading">Carregando...</div>
+
 		<table id="tabela-usuarios">
 			<thead>
-				<!-- cabeçalho da tabela -->
+				<!-- thead -> cabeçalho da tabela
+				titulo das colunas -->
 				<tr>
-					<!-- linha da tabela -->
+					<!-- tr (table Row) -> linha da tabela -->
+					<!-- th (table header) -> escreva o nome
+					de cada coluna -->
 					<th>ID</th>
 					<th>Nome</th>
 					<th>Email</th>
-					<th>Cadastrado em</th>
-					<!-- nome de cada coluna/celula da tabela -->
+					<th>Data de Criação</th>
+					<th>Ações</th>
+					<!-- Voltaremos aqui para adicionar mais
+					uma coisa -->
 				</tr>
 			</thead>
-			<tbody id="tbody-usuarios">
-				<!-- JS vai escrever todos os usuarios aqui -->
+			<!-- Depois da cabeça vem o que?
+			o corpo -> tbody -->
+			<tbody id="conteudo-tabela">
+				<!-- Isso vai ser escrito no JS -->
 			</tbody>
 		</table>
 
