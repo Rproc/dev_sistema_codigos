@@ -1,176 +1,98 @@
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods, require_GET, require_POST
-from flask import Response
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+
 from usuarios.models import Usuario
-import json
-from django.db.models import Q
+from usuarios.serializers import UsuarioSerializer
 
-def home(request):
+class UsuarioListAPIView(APIView):
     """
-    Rota principal da API, retorna uma mensagem de boas-vindas
-    e a versão da API.
-    """
-    return JsonResponse({
-        'mensagem': "Bem vindo ao Geovanni's Pizza - Django Version",
-        'versao': '1.0'
-    })
-
-@require_http_methods(['GET', 'POST'])
-def usuarios_view(request):
-    """
-    GET  /usuarios/ -> Listar
-    POST /usuarios/ -> Criar
+    GET  /usuarios/ - Listar todos
+    POST /usuarios/ - Criar novo
     """
     
-    if request.method == 'GET':
-        # LISTAR
+    def get(self, request):
+        """Listar usuários"""
         usuarios = Usuario.objects.all()
-        # Filtro por nome
-        nome = request.GET.get('nome')
-        if nome:
-            usuarios = usuarios.filter(nome__icontains=nome)
-
-        # Filtro por email
-        email = request.GET.get('email')
-        if email:
-            usuarios = usuarios.filter(email__icontains=email)
         
-		# Busca geral (OR)
-        busca = request.GET.get('busca')
-        if busca:
-            usuarios = usuarios.filter(
-                Q(nome__icontains=busca) |
-                Q(email__icontains=busca)
-            )
-
-        # Ordenação
-        ordem = request.GET.get('ordem', '-criado')
-        usuarios = usuarios.order_by(ordem)
+        # Serializar (many=True para lista)
+        serializer = UsuarioSerializer(usuarios, many=True)
         
-		# --- PAGINAÇÃO MANUAL ---
-        pagina = int(request.GET.get('pagina', 1))
-        por_pagina = int(request.GET.get('por_pagina', 1))
-
-        total = usuarios.count()
-        start = (pagina - 1) * por_pagina
-        end = start + por_pagina
-
-        usuarios_paginados = usuarios[start:end]
-
-        total_paginas = (total + por_pagina - 1) // por_pagina  # ceil manual
-        
-        dados = [
-            {
-                'id': usuario.id,
-                'nome': usuario.nome,
-                'email': usuario.email
-            }
-            for usuario in usuarios_paginados
-        ]
-        return JsonResponse(
-            {
-                'dados': dados, 
-                'pagina': pagina,
-                'por_pagina': por_pagina,
-             	'total': len(dados),
-                'total_pages': total_paginas,
-                'tem_proxima': pagina < total_paginas,
-                'tem_anterior': pagina > 1,
-                'filtros':{
-                    'nome':nome,
-                    'email':email,
-                    'ordem':ordem
-				}
-            }
-        )
-    
-    elif request.method == 'POST':
-        # CRIAR
-        try:
-            dados = json.loads(request.body)
-            
-            usuario = Usuario.objects.create(
-                nome=dados['nome'],
-                email=dados['email'],
-                senha=dados['senha']
-            )
-            
-            return JsonResponse(
-                {
-                    'mensagem': 'Usuário criado com sucesso',
-                    'usuario': {
-                        'id': usuario.id,
-                        'nome': usuario.nome,
-                        'email': usuario.email
-                    }
-                },
-                status=201
-            )
-        except KeyError as e:
-            return JsonResponse(
-                {'erro': f'Campo obrigatório: {e}'},
-                status=400
-            )
-        except Exception as e:
-            return JsonResponse(
-                {'erro': str(e)},
-                status=400
-            )
-
-
-@require_http_methods(['GET', 'PATCH', 'DELETE'])
-def detalhes_usuario(request, id):
-    """
-    GET    /usuarios/<id>/ -> Buscar
-    PATCH  /usuarios/<id>/ -> Atualizar
-    DELETE /usuarios/<id>/ -> Deletar
-    """
-    
-    try:
-        usuario = Usuario.objects.get(id=id)
-    except Usuario.DoesNotExist:
-        return JsonResponse(
-            {'erro': 'Usuário não encontrado'},
-            status=404
-        )
-    
-    if request.method == 'GET':
-        # BUSCAR
-        return JsonResponse({
-            'id': usuario.id,
-            'nome': usuario.nome,
-            'email': usuario.email,
-            'criado': usuario.criado.isoformat()
+        # Response automático
+        return Response({
+            'dados': serializer.data,
+            'total': len(serializer.data)
         })
     
-    elif request.method == 'PATCH':
-        # ATUALIZAR
-        dados = json.loads(request.body)
+    def post(self, request):
+        """Criar usuário"""
+        # Desserializar (JSON → Python)
+        serializer = UsuarioSerializer(data=request.data)
         
-        if 'nome' in dados:
-            usuario.nome = dados['nome']
-        if 'email' in dados:
-            usuario.email = dados['email']
-        if 'senha' in dados:
-            usuario.senha = dados['senha']
+        # Validar
+        if serializer.is_valid():
+            # Salvar no banco
+            usuario = serializer.save()
+            
+            return Response({
+                'mensagem': 'Usuário criado com sucesso',
+                'usuario': UsuarioSerializer(usuario).data
+            }, status=status.HTTP_201_CREATED)
         
-        usuario.save()
-        
-        return JsonResponse({
-            'mensagem': 'Usuário atualizado',
-            'usuario': {
-                'id': usuario.id,
-                'nome': usuario.nome,
-                'email': usuario.email
-            }
-        })
+        # Se inválido, retornar erros
+        return Response(
+            {'erro': serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
     
-    elif request.method == 'DELETE':
-        # DELETAR
+
+class UsuarioDetailAPIView(APIView):
+    """
+    GET    /usuarios/<id>/ - Buscar
+    PATCH  /usuarios/<id>/ - Atualizar
+    DELETE /usuarios/<id>/ - Deletar
+    """
+    
+    def get_object(self, id):
+        """Helper para buscar usuário ou retornar 404"""
+        return get_object_or_404(Usuario, id=id)
+    
+    def get(self, request, id):
+        """Buscar usuário específico"""
+        usuario = self.get_object(id)
+        serializer = UsuarioSerializer(usuario)
+        return Response(serializer.data)
+    
+    def patch(self, request, id):
+        """Atualizar parcialmente"""
+        usuario = self.get_object(id)
+        
+        # partial=True = permite atualizar apenas alguns campos
+        serializer = UsuarioSerializer(
+            usuario,
+            data=request.data,
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'mensagem': 'Usuário atualizado',
+                'usuario': serializer.data
+            })
+        
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def delete(self, request, id):
+        """Deletar usuário"""
+        usuario = self.get_object(id)
         nome = usuario.nome
         usuario.delete()
         
-        return JsonResponse({
+        return Response({
             'mensagem': f'Usuário {nome} deletado com sucesso'
-        })
-    
+        }, status=status.HTTP_200_OK)

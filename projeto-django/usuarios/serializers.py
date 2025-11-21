@@ -19,7 +19,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Usuario  # Qual model serializar
-		fields = ['id', 'nome', 'email', 'criado', 'atualizado', 'senha', 'nome_completo']
+		fields = ['id', 'nome', 'email', 'criado', 'atualizado', 'senha', 'nome_completo', 'senha_confirmacao']
 		# Ou usar '__all__' para todos os campos
 		# fields = '__all__' 
 		# exclude = ['senha'] # todos os campos, exceto a senha
