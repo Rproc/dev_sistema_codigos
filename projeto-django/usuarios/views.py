@@ -1,7 +1,9 @@
-from django.shortcuts import render
 from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods, require_GET, require_POST
+from flask import Response
 from usuarios.models import Usuario
-
+import json
+from django.db.models import Q
 
 def home(request):
     """
@@ -13,121 +15,162 @@ def home(request):
         'versao': '1.0'
     })
 
-def listar_usuarios(request):
+@require_http_methods(['GET', 'POST'])
+def usuarios_view(request):
     """
-    GET /usuarios/
-    Lista todos os usuários
-    
-    Equivalente Flask:
-    @app.route('/usuarios', methods=['GET'])
-    def listar_usuarios():
-        usuarios = Usuario.query.all()
-        return jsonify([u.to_dict() for u in usuarios])
+    GET  /usuarios/ -> Listar
+    POST /usuarios/ -> Criar
     """
     
-    # Buscar todos os usuários
-    usuarios = Usuario.objects.all()
-    
-    # Converter para lista de dicionários
-    dados = []
-    for usuario in usuarios:
-        dados.append({
-            'id': usuario.id,
-            'nome': usuario.nome,
-            'email': usuario.email,
-            'criado': usuario.criado.isoformat()
-        })
-    # Usando pythonês 
-    # dados = [
-    #     {
-    #         'id': u.id,
-    #         'nome': u.nome,
-    #         'email': u.email,
-    #         'criado': u.criado.isoformat()
-    #     }
-    #     for u in usuarios
-    # ]
-    
-    # Retornar JSON
-    return JsonResponse({
-        'dados': dados,
-        'total': len(dados)
-    })
+    if request.method == 'GET':
+        # LISTAR
+        usuarios = Usuario.objects.all()
+        # Filtro por nome
+        nome = request.GET.get('nome')
+        if nome:
+            usuarios = usuarios.filter(nome__icontains=nome)
 
-# usuarios/views.py
+        # Filtro por email
+        email = request.GET.get('email')
+        if email:
+            usuarios = usuarios.filter(email__icontains=email)
+        
+		# Busca geral (OR)
+        busca = request.GET.get('busca')
+        if busca:
+            usuarios = usuarios.filter(
+                Q(nome__icontains=busca) |
+                Q(email__icontains=busca)
+            )
 
-def buscar_usuario(request, id):
-    """
-    GET /usuarios/1/
-    Busca um usuário específico por ID
+        # Ordenação
+        ordem = request.GET.get('ordem', '-criado')
+        usuarios = usuarios.order_by(ordem)
+        
+		# --- PAGINAÇÃO MANUAL ---
+        pagina = int(request.GET.get('pagina', 1))
+        por_pagina = int(request.GET.get('por_pagina', 1))
+
+        total = usuarios.count()
+        start = (pagina - 1) * por_pagina
+        end = start + por_pagina
+
+        usuarios_paginados = usuarios[start:end]
+
+        total_paginas = (total + por_pagina - 1) // por_pagina  # ceil manual
+        
+        dados = [
+            {
+                'id': usuario.id,
+                'nome': usuario.nome,
+                'email': usuario.email
+            }
+            for usuario in usuarios_paginados
+        ]
+        return JsonResponse(
+            {
+                'dados': dados, 
+                'pagina': pagina,
+                'por_pagina': por_pagina,
+             	'total': len(dados),
+                'total_pages': total_paginas,
+                'tem_proxima': pagina < total_paginas,
+                'tem_anterior': pagina > 1,
+                'filtros':{
+                    'nome':nome,
+                    'email':email,
+                    'ordem':ordem
+				}
+            }
+        )
     
-    No Flask:
-    @app.route('/usuarios/<int:id>')
-	def buscar_usuario(id):
-    	usuario = Usuario.query.get(id)
+    elif request.method == 'POST':
+        # CRIAR
+        try:
+            dados = json.loads(request.body)
+            
+            usuario = Usuario.objects.create(
+                nome=dados['nome'],
+                email=dados['email'],
+                senha=dados['senha']
+            )
+            
+            return JsonResponse(
+                {
+                    'mensagem': 'Usuário criado com sucesso',
+                    'usuario': {
+                        'id': usuario.id,
+                        'nome': usuario.nome,
+                        'email': usuario.email
+                    }
+                },
+                status=201
+            )
+        except KeyError as e:
+            return JsonResponse(
+                {'erro': f'Campo obrigatório: {e}'},
+                status=400
+            )
+        except Exception as e:
+            return JsonResponse(
+                {'erro': str(e)},
+                status=400
+            )
+
+
+@require_http_methods(['GET', 'PATCH', 'DELETE'])
+def detalhes_usuario(request, id):
+    """
+    GET    /usuarios/<id>/ -> Buscar
+    PATCH  /usuarios/<id>/ -> Atualizar
+    DELETE /usuarios/<id>/ -> Deletar
     """
     
     try:
         usuario = Usuario.objects.get(id=id)
-        
-        dados = {
-            'id': usuario.id,
-            'nome': usuario.nome,
-            'email': usuario.email,
-            'criado': usuario.criado.isoformat(),
-            'atualizado': usuario.atualizado.isoformat()
-        }
-        
-        return JsonResponse(dados)
-        
     except Usuario.DoesNotExist:
         return JsonResponse(
             {'erro': 'Usuário não encontrado'},
             status=404
         )
     
-# usuarios/views.py
-
-def listar_usuarios_com_filtros(request):
-    """
-    GET /usuarios/?nome=joao&email=joao@email.com
-    Lista usuários com filtros opcionais
-    """
+    if request.method == 'GET':
+        # BUSCAR
+        return JsonResponse({
+            'id': usuario.id,
+            'nome': usuario.nome,
+            'email': usuario.email,
+            'criado': usuario.criado.isoformat()
+        })
     
-    # Começar com todos
-    usuarios = Usuario.objects.all()
+    elif request.method == 'PATCH':
+        # ATUALIZAR
+        dados = json.loads(request.body)
+        
+        if 'nome' in dados:
+            usuario.nome = dados['nome']
+        if 'email' in dados:
+            usuario.email = dados['email']
+        if 'senha' in dados:
+            usuario.senha = dados['senha']
+        
+        usuario.save()
+        
+        return JsonResponse({
+            'mensagem': 'Usuário atualizado',
+            'usuario': {
+                'id': usuario.id,
+                'nome': usuario.nome,
+                'email': usuario.email
+            }
+        })
     
-    # Filtrar por nome (se fornecido)
-    nome = request.GET.get('nome')  # ← GET (maiúsculo!)
-    if nome:
-        # __icontains = contem (case insensitive [não diferencia maiúsculas/minúsculas])
-        usuarios = usuarios.filter(nome__icontains=nome)
+    elif request.method == 'DELETE':
+        # DELETAR
+        nome = usuario.nome
+        usuario.delete()
+        
+        return JsonResponse({
+            'mensagem': f'Usuário {nome} deletado com sucesso'
+        })
     
-    # Filtrar por email (se fornecido)
-    email = request.GET.get('email')
-    if email:
-        usuarios = usuarios.filter(email__icontains=email)
-    
-    # Ordenar
-    ordem = request.GET.get('ordem', '-criado')  # Default: mais recente
-    usuarios = usuarios.order_by(ordem)
-    
-    # Converter para lista
-    dados = [
-        {
-            'id': u.id,
-            'nome': u.nome,
-            'email': u.email,
-        }
-        for u in usuarios
-    ]
-    
-    return JsonResponse({
-        'dados': dados,
-        'total': len(dados),
-        'filtros': {
-            'nome': nome,
-            'email': email,
-            'ordem': ordem
-        }
-    })
