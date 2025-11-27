@@ -1,98 +1,46 @@
-from rest_framework.views import APIView
+from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
-from django.shortcuts import get_object_or_404
 
 from usuarios.models import Usuario
 from usuarios.serializers import UsuarioSerializer
 
-class UsuarioListAPIView(APIView):
+class UsuarioViewSet(viewsets.ModelViewSet):
     """
-    GET  /usuarios/ - Listar todos
-    POST /usuarios/ - Criar novo
+    ViewSet para CRUD de usuários
+    
+    Automaticamente fornece:
+    - list()    GET    /usuarios/
+    - create()  POST   /usuarios/
+    - retrieve() GET   /usuarios/<id>/
+    - update()  PUT    /usuarios/<id>/
+    - partial_update() PATCH /usuarios/<id>/
+    - destroy() DELETE /usuarios/<id>/
     """
     
-    def get(self, request):
-        """Listar usuários"""
-        usuarios = Usuario.objects.all()
-        
-        # Serializar (many=True para lista)
-        serializer = UsuarioSerializer(usuarios, many=True)
-        
-        # Response automático
-        return Response({
-            'dados': serializer.data,
-            'total': len(serializer.data)
-        })
-    
-    def post(self, request):
-        """Criar usuário"""
-        # Desserializar (JSON → Python)
-        serializer = UsuarioSerializer(data=request.data)
-        
-        # Validar
-        if serializer.is_valid():
-            # Salvar no banco
-            usuario = serializer.save()
-            
-            return Response({
-                'mensagem': 'Usuário criado com sucesso',
-                'usuario': UsuarioSerializer(usuario).data
-            }, status=status.HTTP_201_CREATED)
-        
-        # Se inválido, retornar erros
-        return Response(
-            {'erro': serializer.errors},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
 
-class UsuarioDetailAPIView(APIView):
-    """
-    GET    /usuarios/<id>/ - Buscar
-    PATCH  /usuarios/<id>/ - Atualizar
-    DELETE /usuarios/<id>/ - Deletar
-    """
-    
-    def get_object(self, id):
-        """Helper para buscar usuário ou retornar 404"""
-        return get_object_or_404(Usuario, id=id)
-    
-    def get(self, request, id):
-        """Buscar usuário específico"""
-        usuario = self.get_object(id)
-        serializer = UsuarioSerializer(usuario)
-        return Response(serializer.data)
-    
-    def patch(self, request, id):
-        """Atualizar parcialmente"""
-        usuario = self.get_object(id)
+    def get_queryset(self):
+        '''
+        Permite customizar o queryset retornado
+        GET /usuarios/?nome=melquisedeque&email=gmail
+        '''
         
-        # partial=True = permite atualizar apenas alguns campos
-        serializer = UsuarioSerializer(
-            usuario,
-            data=request.data,
-            partial=True
-        )
+        queryset = Usuario.objects.all()
         
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                'mensagem': 'Usuário atualizado',
-                'usuario': serializer.data
-            })
+        # Filtrar por nome
+        nome = self.request.query_params.get('nome')
+        if nome:
+            queryset = queryset.filter(nome__icontains=nome)
         
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    def delete(self, request, id):
-        """Deletar usuário"""
-        usuario = self.get_object(id)
-        nome = usuario.nome
-        usuario.delete()
+        # Filtrar por email
+        email = self.request.query_params.get('email')
+        if email:
+            queryset = queryset.filter(email__icontains=email)
         
-        return Response({
-            'mensagem': f'Usuário {nome} deletado com sucesso'
-        }, status=status.HTTP_200_OK)
+        # Ordenar
+        ordem = self.request.query_params.get('ordem', '-criado')
+        queryset = queryset.order_by(ordem)
+        
+        return queryset
