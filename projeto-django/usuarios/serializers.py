@@ -88,3 +88,67 @@ class UsuarioSerializer(serializers.ModelSerializer):
         # Remover senha_confirmacao (não está no model)
         data.pop('senha_confirmacao')
         return data
+    
+# ---  new ------------------
+
+class LoginSerializer(serializers.Serializer):
+    """
+    Serializer para login (não vinculado a um model)
+    
+    Campos:
+    - email: obrigatório
+    - senha: obrigatória, write_only
+    
+    Validação:
+    - Verifica se usuário existe
+    - Verifica se senha está correta
+    """
+    
+    email = serializers.EmailField(
+        required=True,
+        help_text='Email do usuário'
+    )
+    
+    senha = serializers.CharField(
+        required=True,
+        write_only=True,
+        style={'input_type': 'password'},  # Aparece como campo de senha no Browsable API
+        help_text='Senha do usuário'
+    )
+    
+    def validate_email(self, value):
+        """Normaliza email (lowercase, sem espaços)"""
+        return value.strip().lower()
+    
+    def validate(self, data):
+        """
+        Validação a nível de objeto
+        
+        Verifica:
+        1. Se o email existe
+        2. Se a senha está correta
+        
+        Retorna os dados validados + objeto usuario
+        """
+        email = data.get('email')
+        senha = data.get('senha')
+        
+        # 1. Verificar se usuário existe
+        try:
+            usuario = Usuario.objects.get(email=email)
+        except Usuario.DoesNotExist:
+            raise serializers.ValidationError(
+                'Email ou senha inválidos',
+                code='authentication_failed'
+            )
+        
+        # 2. Verificar senha usando o método do model
+        if not usuario.verificar_senha(senha):
+            raise serializers.ValidationError(
+                'Email ou senha inválidos',
+                code='authentication_failed'
+            )
+        
+        # 3. Adicionar usuário aos dados validados
+        data['usuario'] = usuario
+        return data
