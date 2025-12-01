@@ -1,46 +1,107 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.permissions import AllowAny
 
-from usuarios.models import Usuario
-from usuarios.serializers import UsuarioSerializer
+from .models import Usuario
+from .serializers import (
+    UsuarioSerializer,
+    CadastroSerializer,
+    LoginSerializer
+)
+
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     """
-    ViewSet para CRUD de usuários
-    
-    Automaticamente fornece:
-    - list()    GET    /usuarios/
-    - create()  POST   /usuarios/
-    - retrieve() GET   /usuarios/<id>/
-    - update()  PUT    /usuarios/<id>/
-    - partial_update() PATCH /usuarios/<id>/
-    - destroy() DELETE /usuarios/<id>/
+    ViewSet para usuários com cadastro e login
     """
-    
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
-
-    def get_queryset(self):
-        '''
-        Permite customizar o queryset retornado
-        GET /usuarios/?nome=melquisedeque&email=gmail
-        '''
+    permission_classes = [AllowAny]  # Tudo público por enquanto
+    
+    # ============================================
+    # ACTION: CADASTRO
+    # ============================================
+    
+    @action(detail=False, methods=['post'], url_path='cadastro')
+    def cadastro(self, request):
+        """
+        POST /usuarios/cadastro/
         
-        queryset = Usuario.objects.all()
+        Cadastra um novo usuário.
         
-        # Filtrar por nome
-        nome = self.request.query_params.get('nome')
-        if nome:
-            queryset = queryset.filter(nome__icontains=nome)
+        Body:
+        {
+            "nome": "João Silva",
+            "email": "joao@example.com",
+            "senha": "senha12345678"
+        }
         
-        # Filtrar por email
-        email = self.request.query_params.get('email')
-        if email:
-            queryset = queryset.filter(email__icontains=email)
+        Resposta (201):
+        {
+            "mensagem": "Usuário cadastrado com sucesso",
+            "usuario": {
+                "id": 1,
+                "nome": "João Silva",
+                "email": "joao@example.com",
+                "criado": "2024-11-17T10:00:00Z"
+            }
+        }
+        """
+        serializer = CadastroSerializer(data=request.data)
         
-        # Ordenar
-        ordem = self.request.query_params.get('ordem', '-criado')
-        queryset = queryset.order_by(ordem)
+        if serializer.is_valid():
+            # Criar usuário (senha será hasheada automaticamente)
+            usuario = serializer.save()
+            
+            return Response({
+                'mensagem': 'Usuário cadastrado com sucesso',
+                'usuario': UsuarioSerializer(usuario).data
+            }, status=status.HTTP_201_CREATED)
         
-        return queryset
+        return Response({
+            'erro': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # ============================================
+    # ACTION: LOGIN
+    # ============================================
+    
+    @action(detail=False, methods=['post'], url_path='login')
+    def login(self, request):
+        """
+        POST /usuarios/login/
+        
+        Faz login de um usuário.
+        
+        Body:
+        {
+            "email": "joao@example.com",
+            "senha": "senha12345678"
+        }
+        
+        Resposta (200):
+        {
+            "mensagem": "Login realizado com sucesso",
+            "usuario": {
+                "id": 1,
+                "nome": "João Silva",
+                "email": "joao@example.com",
+                "criado": "2024-11-17T10:00:00Z"
+            }
+        }
+        """
+        serializer = LoginSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            # Pegar usuário validado
+            usuario = serializer.validated_data['usuario']
+            
+            return Response({
+                'mensagem': 'Login realizado com sucesso',
+                'usuario': UsuarioSerializer(usuario).data
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            'erro': serializer.errors
+        }, status=status.HTTP_401_UNAUTHORIZED)
