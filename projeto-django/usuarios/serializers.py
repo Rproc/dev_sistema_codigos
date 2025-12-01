@@ -1,171 +1,103 @@
 from rest_framework import serializers
-from usuarios.models import Usuario
+from .models import Usuario
 
 
-class UsuarioSerializer(serializers.ModelSerializer):
+# ============================================
+# SERIALIZER DE CADASTRO
+# ============================================
+
+class CadastroSerializer(serializers.ModelSerializer):
     """
-    Serializer para o model Usuario
-    Equivalente ao to_dict() do Flask, mas mais poderoso!
+    Serializer para cadastro de novos usuários
     """
     senha = serializers.CharField(
-    write_only=True,  # Não aparece na saída
-    min_length=8,
-    max_length=50
+        write_only=True,  # Não retorna senha na resposta
+        min_length=8,
+        style={'input_type': 'password'}
     )
-    senha_confirmacao = serializers.CharField(write_only=True)
-
-    # Campo calculado (SerializerMethodField)
-    nome_completo = serializers.SerializerMethodField()
-
+    
     class Meta:
-        model = Usuario  # Qual model serializar
-        fields = ['id', 'nome', 'email', 'criado', 'atualizado', 'senha', 'nome_completo', 'senha_confirmacao']
-        # Ou usar '__all__' para todos os campos
-        # fields = '__all__' 
-        # exclude = ['senha'] # todos os campos, exceto a senha
-
-    # Campos somente leitura (não podem ser modificados)
-    read_only_fields = ['id', 'criado', 'atualizado']
-
-    def get_nome_completo(self, obj):
-        """
-        Método para obter o nome completo do usuário.
-        Exemplo de campo calculado.
-        deve começar com get_<nome_do_campo>
-        """
-        return f"{obj.nome} ({obj.email})"
+        model = Usuario
+        fields = ['nome', 'email', 'senha']
     
     def validate_nome(self, value):
-        """
-        Valida o campo 'nome'
-        Método DEVE se chamar validate_<nome_do_campo>
-        """
-        if len(value) < 3:
-            raise serializers.ValidationError(
-            "Nome deve ter no mínimo 3 caracteres"
-        )
-
-        # Sempre retornar o valor (possivelmente modificado)
+        """Validar nome"""
+        if len(value.strip()) < 3:
+            raise serializers.ValidationError("Nome deve ter no mínimo 3 caracteres")
         return value.strip()
-
+    
     def validate_email(self, value):
-        """Valida email"""
-        email = value.lower().strip()
-
+        """Validar email"""
+        email = value.strip().lower()
+        
         # Verificar se já existe
         if Usuario.objects.filter(email=email).exists():
-            raise serializers.ValidationError(
-            "Este email já está cadastrado"
-        )
+            raise serializers.ValidationError("Este email já está cadastrado")
+        
         return email
-
+    
     def validate_senha(self, value):
-        """Valida senha"""
+        """Validar senha"""
         if len(value) < 8:
-            raise serializers.ValidationError(
-            "Senha deve ter no mínimo 8 caracteres"
-        )
-
-        if value.isdigit():
-            raise serializers.ValidationError(
-            "Senha não pode ser apenas números"
-        )
+            raise serializers.ValidationError("Senha deve ter no mínimo 8 caracteres")
         return value
     
-    def validate(self, data):
-        """
-        Validação a nível de objeto (múltiplos campos)
-        Chamado APÓS validate_<campo> individuais
-        """
-        senha = data.get('senha')
-        senha_confirmacao = data.get('senha_confirmacao')
+    def create(self, validated_data):
+        """Criar usuário (senha será hasheada pelo model)"""
+        return Usuario.objects.create(**validated_data)
 
-        if senha != senha_confirmacao:
-            raise serializers.ValidationError({
-                'senha_confirmacao': 'As senhas não conferem'
-            })
 
-        # Remover senha_confirmacao (não está no model)
-        data.pop('senha_confirmacao')
-        return data
-    
-    def update(self, instance, validated_data):
-        """
-        Ao atualizar, verifica se senha é diferente
-        """
-        if 'senha' in validated_data:
-            # Verifica se senha nova é diferente da antiga
-            if instance.verificar_senha(validated_data['senha']):
-                raise serializers.ValidationError({
-                    'senha': 'Nova senha não pode ser igual à anterior'
-                })
-        
-        # Atualiza normalmente
-        for campo, valor in validated_data.items():
-            setattr(instance, campo, valor)
-        
-        instance.save()  # Hash automático aqui!
-        return instance 
-# ---  new ------------------
+# ============================================
+# SERIALIZER DE LOGIN
+# ============================================
 
 class LoginSerializer(serializers.Serializer):
     """
-    Serializer para login (não vinculado a um model)
-    
-    Campos:
-    - email: obrigatório
-    - senha: obrigatória, write_only
-    
-    Validação:
-    - Verifica se usuário existe
-    - Verifica se senha está correta
+    Serializer para login (não vinculado a model)
     """
-    
-    email = serializers.EmailField(
-        required=True,
-        help_text='Email do usuário'
-    )
-    
+    email = serializers.EmailField(required=True)
     senha = serializers.CharField(
         required=True,
         write_only=True,
-        style={'input_type': 'password'},  # Aparece como campo de senha no Browsable API
-        help_text='Senha do usuário'
+        style={'input_type': 'password'}
     )
     
     def validate_email(self, value):
-        """Normaliza email (lowercase, sem espaços)"""
+        """Normalizar email"""
         return value.strip().lower()
     
     def validate(self, data):
         """
-        Validação a nível de objeto
-        
-        Verifica:
-        1. Se o email existe
-        2. Se a senha está correta
-        
-        Retorna os dados validados + objeto usuario
+        Validar credenciais
         """
         email = data.get('email')
         senha = data.get('senha')
         
-        # 1. Verificar se usuário existe
+        # Buscar usuário
         try:
             usuario = Usuario.objects.get(email=email)
         except Usuario.DoesNotExist:
-            raise serializers.ValidationError(
-                'Email ou senha inválidos',
-                code='authentication_failed'
-            )
+            raise serializers.ValidationError("Email ou senha inválidos")
         
-        # 2. Verificar senha usando o método do model
+        # Verificar senha (usando método do model)
         if not usuario.verificar_senha(senha):
-            raise serializers.ValidationError(
-                'Email ou senha inválidos',
-                code='authentication_failed'
-            )
+            raise serializers.ValidationError("Email ou senha inválidos")
         
-        # 3. Adicionar usuário aos dados validados
+        # Adicionar usuário aos dados validados
         data['usuario'] = usuario
         return data
+
+
+# ============================================
+# SERIALIZER DE USUÁRIO (para respostas)
+# ============================================
+
+class UsuarioSerializer(serializers.ModelSerializer):
+    """
+    Serializer para retornar dados do usuário
+    (SEM senha!)
+    """
+    class Meta:
+        model = Usuario
+        fields = ['id', 'nome', 'email', 'criado']
+        read_only_fields = ['id', 'criado']
