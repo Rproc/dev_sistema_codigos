@@ -15,10 +15,16 @@ class CadastroSerializer(serializers.ModelSerializer):
         min_length=8,
         style={'input_type': 'password'}
     )
+
+    senha_confirmacao = serializers.CharField(
+        write_only=True,  # Não retorna senha na resposta
+        min_length=8,
+        style={'input_type': 'password'}
+    )
     
     class Meta:
         model = Usuario
-        fields = ['nome', 'email', 'senha']
+        fields = ['nome', 'email', 'senha', 'senha_confirmacao']
     
     def validate_nome(self, value):
         """Validar nome"""
@@ -40,11 +46,34 @@ class CadastroSerializer(serializers.ModelSerializer):
         """Validar senha"""
         if len(value) < 8:
             raise serializers.ValidationError("Senha deve ter no mínimo 8 caracteres")
+        if value.isdigit():
+            raise serializers.ValidationError(
+                'Senha não pode ser apenas números'
+            )
         return value
     
     def create(self, validated_data):
         """Criar usuário (senha será hasheada pelo model)"""
+        validated_data.pop('senha_confirmacao', None)
         return Usuario.objects.create(**validated_data)
+    
+    def update(self, instance, validated_data):
+        '''
+        Ao atualizar, verifica se a senha é diferente 
+        '''
+        if 'senha' in validated_data:
+            if instance.verificar_senha(
+                validated_data['senha']):
+                # chamar o metodo verificar_senha do modelo
+                # e passar a senha digitada
+                raise serializers.ValidationError({
+                    'senha': 'Nova senha não pode ser igual a anterior'
+                })
+        # atualizar senha do usuario
+        for campo, valor in validated_data.items():
+            setattr(instance, campo, valor)
+        instance.save()
+        return instance
 
 
 # ============================================

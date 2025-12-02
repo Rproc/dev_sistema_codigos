@@ -23,7 +23,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     # ACTION: CADASTRO
     # ============================================
     
-    @action(detail=False, methods=['post'], url_path='cadastro')
+    @action(detail=False, methods=['post'], url_path='cadastro', serializer_class=CadastroSerializer)
     def cadastro(self, request):
         """
         POST /usuarios/cadastro/
@@ -67,7 +67,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     # ACTION: LOGIN
     # ============================================
     
-    @action(detail=False, methods=['post'], url_path='login')
+    @action(detail=False, methods=['post'], url_path='login', serializer_class=LoginSerializer)
     def login(self, request):
         """
         POST /usuarios/login/
