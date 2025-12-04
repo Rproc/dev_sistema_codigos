@@ -130,3 +130,18 @@ class UsuarioSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = ['id', 'nome', 'email', 'criado']
         read_only_fields = ['id', 'criado']
+
+
+# ============================================
+# SERIALIZER DE RESPOSTA DO LOGIN COM JWT
+# ============================================
+
+class LoginResponseSerializer(serializers.Serializer):
+    """
+    Serializer para documentar a resposta do login
+    (apenas para documentação da API)
+    """
+    mensagem = serializers.CharField()
+    usuario = UsuarioSerializer()
+    access = serializers.CharField(help_text='Token de acesso JWT')
+    refresh = serializers.CharField(help_text='Token de refresh JWT')
